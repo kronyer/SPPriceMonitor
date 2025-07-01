@@ -1,0 +1,94 @@
+﻿@page "/"
+@using YokaiSupermarketPriceTracker.Interfaces
+@using YokaiSupermarketPriceTracker.Models
+@inject IProductRepository produtoRepository
+@inject IProductVariationRepository produtoVariacaoRepository
+<h1>Scan a Barcode</h1>
+
+<button @onclick="ScanBarcode">Scan Barcode</button>
+
+@if (showModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal">
+            <h3>Barcode Details</h3>
+            <div>
+                <label>Produto:</label>
+                <input value="@nomeProduto" />
+            </div>
+            <div>
+                <label>Código:</label>
+                <input value="@barcode" readonly />
+            </div>
+            <div>
+                <label>Valor:</label>
+                <input @bind="valor" />
+            </div>
+            <button @onclick="Save">Salvar</button>
+            <button @onclick="CloseModal">Fechar</button>
+        </div>
+    </div>
+}
+
+@code {
+    string barcode = string.Empty;
+    string valor = string.Empty;
+    bool showModal = false;
+    
+    Product? produtoExistente = null;
+    string nomeProduto = string.Empty;
+    
+    async Task ScanBarcode()
+    {
+
+        var scanner = new ZXing.Mobile.MobileBarcodeScanner();
+        var result = await scanner.Scan();
+        if (result != null)
+        {
+            barcode = result.Text;
+            produtoExistente = await produtoRepository.GetByBarcodeAsync(barcode);
+            if (produtoExistente != null)
+            {
+                nomeProduto = produtoExistente.Name;
+            }
+            showModal = true;
+        }
+    }
+
+    async Task Save()
+    {
+         bool produtoExiste = await produtoRepository.GetByBarcodeAsync(barcode) is not null;
+         if (produtoExiste)
+         {
+             ProductVariation variacao = new ProductVariation()
+             {
+                 Date = DateTime.Now,
+                 ProductBarcode = barcode,
+                 Price = decimal.Parse(valor)
+             };
+             await produtoVariacaoRepository.AddAsync(variacao);
+         }
+         else
+         {
+             Product novoProduto = new Product()
+             {
+                 Name = nomeProduto,
+                 Barcode = barcode
+             };
+             
+             ProductVariation variacao = new ProductVariation()
+             {
+                 Date = DateTime.Now,
+                 ProductBarcode = barcode,
+                 Price = decimal.Parse(valor)
+             };
+             await produtoVariacaoRepository.AddAsync(variacao);
+         }
+    }
+
+    void CloseModal()
+    {
+        showModal = false;
+        valor = string.Empty;
+    }
+}
