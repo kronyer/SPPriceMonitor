@@ -1,0 +1,108 @@
+﻿@page "/register-price"
+@using YokaiSupermarketPriceTracker.Infrastructure.Repositories
+@using YokaiSupermarketPriceTracker.Interfaces
+@using YokaiSupermarketPriceTracker.Models
+@inject IProductRepository produtoRepository
+@inject IProductVariationRepository produtoVariacaoRepository
+
+
+<div class="page">
+    <div class="first-half">
+        <h1 class="page-title">Cadastrar valor</h1>
+        <input @bind="name" placeholder="Name"/>
+        <input @bind="brand" placeholder="Brand"/>
+        <input @bind="store" placeholder="Store"/>
+        <div class="two-input-div">
+            <input @bind="price" type="number" placeholder="Price"/>
+            <input @bind="date" type="date"/>
+
+        </div>
+    </div>
+    <button onclick="@OnCadastrarClicked()" class="create-btn">
+        Cadastrar
+    </button>
+
+</div>
+
+@code {
+    [Parameter] [SupplyParameterFromQuery] public string? barcode { get; set; }
+
+    private string name = "";
+    private string brand = "";
+    private string store = "";
+    private decimal price;
+    private DateTime date = DateTime.Now;
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(barcode))
+        {
+            var product = await produtoRepository.GetByBarcodeAsync(barcode);
+            if (product != null)
+            {
+                name = product.Name;
+                // Fetch brand/store names as needed
+            }
+        }
+    }
+
+    private async Task OnCadastrarClicked()
+    {
+        try
+        {
+            var product = await produtoRepository.GetByBarcodeAsync(barcode);
+            if (product == null)
+            {
+                var brand = new Brand() { Name = this.brand };
+                var brandId = await produtoRepository.GetBrandByName(brand.Name);
+                if (brandId == 0)
+                    brandId = await produtoRepository.AddBrandAsync(brand);
+
+                var store = new Store() { Name = this.store };
+                var storeId = await produtoRepository.GetStoreByName(store.Name);
+                if (storeId == 0)
+                    storeId = await produtoRepository.AddStoreAsync(store);
+
+                product = new Product
+                {
+                    Barcode = barcode ?? "",
+                    Name = name,
+                    BrandId = brandId,
+                };
+                await produtoRepository.AddAsync(product);
+
+                var productVariation = new ProductVariation
+                {
+                    ProductBarcode = product.Barcode,
+                    Price = price,
+                    Date = date,
+                    StoreId = storeId
+                };
+                await produtoVariacaoRepository.AddAsync(productVariation);
+            }
+            else
+            {
+                var store = new Store() { Name = this.store };
+                var storeId = await produtoRepository.GetStoreByName(store.Name);
+                if (storeId == 0)
+                    storeId = await produtoRepository.AddStoreAsync(store);
+
+                var productVariation = new ProductVariation
+                {
+                    ProductBarcode = product.Barcode,
+                    Price = price,
+                    Date = date,
+                    StoreId = storeId
+                };
+                await produtoVariacaoRepository.AddAsync(productVariation);
+            }
+            message = "Cadastro realizado com sucesso!";
+        }
+        catch (Exception ex)
+        {
+            message = $"Erro ao cadastrar: {ex.Message}";
+        }
+    }
+
+}

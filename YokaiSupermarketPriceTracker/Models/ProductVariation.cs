@@ -12,4 +12,7 @@ public class ProductVariation
     public decimal Price { get; set; }
 
     public DateTime Date { get; set; }
+    public int StoreId { get; set; } // Foreign key to Store
+    [Ignore]
+    public Store Store { get; set; } // Optional store name
 }

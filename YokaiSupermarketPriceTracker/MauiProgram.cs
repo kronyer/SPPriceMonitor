@@ -19,8 +19,6 @@ public static class MauiProgram
 
         string dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
         builder.Services.AddSingleton(new AppDbContext(dbPath));
-        builder.Services.AddScoped<IProductRepository, ProductRepository>();
-        builder.Services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
         
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddScoped<IProductRepository, ProductRepository>();

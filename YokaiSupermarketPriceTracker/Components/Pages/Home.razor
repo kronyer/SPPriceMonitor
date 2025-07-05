@@ -1,89 +1,104 @@
 ﻿@page "/"
+@using YokaiSupermarketPriceTracker.Infrastructure.Repositories
 @using YokaiSupermarketPriceTracker.Interfaces
 @using YokaiSupermarketPriceTracker.Models
 @inject IProductRepository produtoRepository
 @inject IProductVariationRepository produtoVariacaoRepository
-<h1>Scan a Barcode</h1>
+@inject NavigationManager NavigationManager
 
-<button @onclick="ScanBarcode">Scan Barcode</button>
 
-@if (showModal)
-{
-    <div class="modal-backdrop">
-        <div class="modal">
-            <h3>Barcode Details</h3>
-            <div>
-                <label>Produto:</label>
-                <input value="@nomeProduto" />
-            </div>
-            <div>
-                <label>Código:</label>
-                <input value="@barcode" readonly />
-            </div>
-            <div>
-                <label>Valor:</label>
-                <input @bind="valor" />
-            </div>
-            <button @onclick="Save">Salvar</button>
-            <button @onclick="CloseModal">Fechar</button>
+<div class="page">
+    <h1 class="page-title">Últimos registros</h1>
+
+    <div class="search-bar">
+        <div class="search-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M21.5306 20.4694L16.8366 15.7763C18.1971 14.1429 18.8755 12.0478 18.7307 9.92694C18.5859 7.80607 17.629 5.82268 16.0591 4.38935C14.4892 2.95602 12.4272 2.18311 10.3019 2.23141C8.17666 2.27971 6.15184 3.1455 4.64867 4.64867C3.1455 6.15184 2.27971 8.17666 2.23141 10.3019C2.18311 12.4272 2.95602 14.4892 4.38935 16.0591C5.82268 17.629 7.80607 18.5859 9.92694 18.7307C12.0478 18.8755 14.1429 18.1971 15.7763 16.8366L20.4694 21.5306C20.5391 21.6003 20.6218 21.6556 20.7128 21.6933C20.8039 21.731 20.9015 21.7504 21 21.7504C21.0985 21.7504 21.1961 21.731 21.2872 21.6933C21.3782 21.6556 21.4609 21.6003 21.5306 21.5306C21.6003 21.4609 21.6556 21.3782 21.6933 21.2872C21.731 21.1961 21.7504 21.0985 21.7504 21C21.7504 20.9015 21.731 20.8039 21.6933 20.7128C21.6556 20.6218 21.6003 20.5391 21.5306 20.4694ZM3.75 10.5C3.75 9.16498 4.14588 7.85993 4.88758 6.7499C5.62928 5.63987 6.68349 4.77471 7.91689 4.26381C9.15029 3.75292 10.5075 3.61925 11.8169 3.8797C13.1262 4.14015 14.329 4.78303 15.273 5.72703C16.217 6.67103 16.8599 7.87377 17.1203 9.18314C17.3808 10.4925 17.2471 11.8497 16.7362 13.0831C16.2253 14.3165 15.3601 15.3707 14.2501 16.1124C13.1401 16.8541 11.835 17.25 10.5 17.25C8.7104 17.248 6.99466 16.5362 5.72922 15.2708C4.46378 14.0053 3.75199 12.2896 3.75 10.5Z"
+                    fill="#02081E"/>
+            </svg>
         </div>
+        <input class="search-input"/>
     </div>
-}
+
+    <div class="product-list">
+        @foreach (var item in produtos)
+        {
+            <div class="prod-card">
+                <div class="left-side">
+                    <span>@item.Date</span>
+                    <span>@item.Name</span>
+                    <span>@item.Brand</span>
+                </div>
+                <div class="right-side">
+                    <span>@item.Price?.ToString("C2")</span>
+                    <span>@item.Store</span>
+                </div>
+            </div>
+        }
+    </div>
+
+
+    <button class="add-btn" @onclick="ScanBarcode">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M35 20C35 20.3315 34.8683 20.6495 34.6339 20.8839C34.3995 21.1183 34.0815 21.25 33.75 21.25H21.25V33.75C21.25 34.0815 21.1183 34.3995 20.8839 34.6339C20.6495 34.8683 20.3315 35 20 35C19.6685 35 19.3505 34.8683 19.1161 34.6339C18.8817 34.3995 18.75 34.0815 18.75 33.75V21.25H6.25C5.91848 21.25 5.60054 21.1183 5.36612 20.8839C5.1317 20.6495 5 20.3315 5 20C5 19.6685 5.1317 19.3505 5.36612 19.1161C5.60054 18.8817 5.91848 18.75 6.25 18.75H18.75V6.25C18.75 5.91848 18.8817 5.60054 19.1161 5.36612C19.3505 5.1317 19.6685 5 20 5C20.3315 5 20.6495 5.1317 20.8839 5.36612C21.1183 5.60054 21.25 5.91848 21.25 6.25V18.75H33.75C34.0815 18.75 34.3995 18.8817 34.6339 19.1161C34.8683 19.3505 35 19.6685 35 20Z"
+                fill="#E9F0F5"/>
+        </svg>
+    </button>
+
+</div>
 
 @code {
     string barcode = string.Empty;
     string valor = string.Empty;
     bool showModal = false;
-    
+
     Product? produtoExistente = null;
     string nomeProduto = string.Empty;
-    
+
+    List<ProductListDTO> produtos = new List<ProductListDTO>();
+
     async Task ScanBarcode()
     {
-
         var scanner = new ZXing.Mobile.MobileBarcodeScanner();
         var result = await scanner.Scan();
         if (result != null)
         {
             barcode = result.Text;
-            produtoExistente = await produtoRepository.GetByBarcodeAsync(barcode);
-            if (produtoExistente != null)
-            {
-                nomeProduto = produtoExistente.Name;
-            }
-            showModal = true;
+            NavigationManager.NavigateTo($"/register-price?barcode={barcode}");
         }
     }
 
     async Task Save()
     {
-         bool produtoExiste = await produtoRepository.GetByBarcodeAsync(barcode) is not null;
-         if (produtoExiste)
-         {
-             ProductVariation variacao = new ProductVariation()
-             {
-                 Date = DateTime.Now,
-                 ProductBarcode = barcode,
-                 Price = decimal.Parse(valor)
-             };
-             await produtoVariacaoRepository.AddAsync(variacao);
-         }
-         else
-         {
-             Product novoProduto = new Product()
-             {
-                 Name = nomeProduto,
-                 Barcode = barcode
-             };
-             
-             ProductVariation variacao = new ProductVariation()
-             {
-                 Date = DateTime.Now,
-                 ProductBarcode = barcode,
-                 Price = decimal.Parse(valor)
-             };
-             await produtoVariacaoRepository.AddAsync(variacao);
-         }
+        bool produtoExiste = await produtoRepository.GetByBarcodeAsync(barcode) is not null;
+        if (produtoExiste)
+        {
+            ProductVariation variacao = new ProductVariation()
+            {
+                Date = DateTime.Now,
+                ProductBarcode = barcode,
+                Price = decimal.Parse(valor)
+            };
+            await produtoVariacaoRepository.AddAsync(variacao);
+        }
+        else
+        {
+            Product novoProduto = new Product()
+            {
+                Name = nomeProduto,
+                Barcode = barcode
+            };
+
+            ProductVariation variacao = new ProductVariation()
+            {
+                Date = DateTime.Now,
+                ProductBarcode = barcode,
+                Price = decimal.Parse(valor)
+            };
+            await produtoVariacaoRepository.AddAsync(variacao);
+        }
     }
 
     void CloseModal()
@@ -91,4 +106,5 @@
         showModal = false;
         valor = string.Empty;
     }
+
 }
